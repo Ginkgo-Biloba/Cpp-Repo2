@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<ImportGroup Label="PropertySheets" />
+	<PropertyGroup Label="UserMacros" />
+	<PropertyGroup>
+		<glfwdir>E:\CopyApp\glfw-3.3</glfwdir>
+		<IncludePath>$(glfwdir)\include;$(IncludePath)</IncludePath>
+		<LibraryPath Condition="'$(Configuration)|$(PlatformTarget)'=='Debug|x86'">$(glfwdir)\x86_Debug;$(LibraryPath)</LibraryPath>
+		<LibraryPath Condition="'$(Configuration)|$(PlatformTarget)'=='Debug|x64'">$(glfwdir)\x64_Debug;$(LibraryPath)</LibraryPath>
+		<LibraryPath Condition="'$(Configuration)|$(PlatformTarget)'=='Release|x86'">$(glfwdir)\x86_RelWithDebInfo;$(LibraryPath)</LibraryPath>
+		<LibraryPath Condition="'$(Configuration)|$(PlatformTarget)'=='Release|x64'">$(glfwdir)\x64_RelWithDebInfo;$(LibraryPath)</LibraryPath>
+	</PropertyGroup>
+	<ItemDefinitionGroup>
+		<Link>
+			<AdditionalDependencies>glfw3.lib;assimp-vc14_md.lib;%(AdditionalDependencies)</AdditionalDependencies>
+		</Link>
+		</ItemDefinitionGroup>
+	<ItemGroup />
+</Project>
