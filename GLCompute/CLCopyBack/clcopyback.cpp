@@ -46,7 +46,7 @@ struct Julia
 	enum
 	{
 		ndiv = 16,
-		size = 600,
+		size = 960,
 		iter = 255,
 	};
 
@@ -181,7 +181,7 @@ int main()
 	int64_t ticksum = 0;
 	int frame = 0;
 	namedWindow(wd);
-	while (tolower(waitKey(15)) != 'q')
+	while (tolower(waitKey(1)) != 'q')
 	{
 		int64_t tick0 = getTickCount();
 		radius *= ratio;
@@ -190,14 +190,15 @@ int main()
 		ju.org = jmd;
 		ju.ppi = radius * 2.0 / ju.size;
 		ju.run();
+		imshow(wd, ju.image);
 		int64_t tick1 = getTickCount();
 		ticksum += tick1 - tick0;
 		if (((++frame) & 31) == 0)
 		{
-			printf("radius = %.9f, frame %4d, %f ms\n",
-				radius, frame, 1e3 * ticksum / getTickFrequency());
+			double dt = ticksum / getTickFrequency();
+			printf("radius = %.9f, frame %4d, %8.3fms, ~ %.2ffps\n",
+				radius, frame, 1e3 * dt, 32.0 / dt);
 			ticksum = 0;
 		}
-		imshow(wd, ju.image);
 	}
 }

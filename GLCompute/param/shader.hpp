@@ -1,5 +1,6 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
 #include <cstdio>
+#include <string>
 #include <vector>
 #include <fstream>
 #include <glad/glad.h>
@@ -10,24 +11,59 @@
 class GLShader
 {
 	int type;
+	std::vector<std::string> src;
 
 public:
 	unsigned id;
 
-protected:
-	void create(int objtype, char const* objstr)
+	GLShader(int shaderType)
+		: id(0), type(shaderType)
 	{
-		id = 0;
-		type = objtype;
 		assert((type == GL_VERTEX_SHADER)
 			|| (type == GL_FRAGMENT_SHADER)
 			|| (type == GL_GEOMETRY_SHADER)
-			|| (type == GL_COMPUTE_SHADER));
+			|| (type == GL_COMPUTE_SHADER)
+		);
+	}
 
+	GLShader& loadStr(char const* source)
+	{
+		assert(id == 0);
+		src.push_back(std::string(source));
+		return *this;
+	}
+
+	GLShader& loadFile(char const* filename)
+	{
+		assert(id == 0);
+		std::ifstream fid;
+		fid.open(filename, std::ios::ate);
+		if (fid.is_open())
+		{
+			size_t len = static_cast<size_t>(fid.tellg());
+			std::vector<char> obj(len + 1);
+			fid.seekg(std::ios::beg);
+			fid.read(obj.data(), len);
+			fid.close();
+			loadStr(obj.data());
+		}
+		return *this;
+	}
+
+	void compile()
+	{
+		assert(id == 0);
+		GLsizei slen = static_cast<GLsizei>(src.size());
+		std::vector<GLchar const*> ptr;
+		std::vector<int> len;
+		for (auto const& s : src)
+		{
+			ptr.push_back(s.c_str());
+			len.push_back(static_cast<int>(s.length()));
+		}
 		id = glCreateShader(type);
-		glShaderSource(id, 1, &objstr, NULL);
+		glShaderSource(id, slen, ptr.data(), len.data());
 		glCompileShader(id);
-		
 		int err;
 		glGetShaderiv(id, GL_COMPILE_STATUS, &err);
 		if (!err)
@@ -41,37 +77,22 @@ protected:
 		}
 	}
 
-public:
-	GLShader(int objtype, char const* objstr)
-		: id(0), type(0)
+	void release()
 	{
-		create(objtype, objstr);
-	}
-
-	GLShader(int objtype, char const* objfile, int)
-		: id(0), type(0)
-	{
-		std::vector<char> objstr;
-		std::ifstream fid;
-		fid.open(objfile, std::ios::ate);
-		if (!fid.is_open())
-			return;
-
-		size_t len = static_cast<size_t>(fid.tellg());
-		objstr.resize(len + 1);
-		fid.seekg(std::ios::beg);
-		fid.read(objstr.data(), len);
-		fid.close();
-
-		create(objtype, objstr.data());
+		if (id)
+			glDeleteShader(id);
+		id = 0;
+		src.clear();
 	}
 
 	~GLShader()
 	{
-		if (id)
-			glDeleteShader(id);
+		release();
 	}
 };
+
+
+////////////////////////////////////////////////////////////
 
 
 class GLProgram
@@ -93,17 +114,17 @@ public:
 			glDeleteProgram(id);
 	}
 
-	void attach(GLShader obj)
+	GLProgram& attach(GLShader const& obj)
 	{
-		assert(!done);
+		assert(done == 0);
 		glAttachShader(id, obj.id);
+		return *this;
 	}
 
-	void link()
+	GLProgram& link()
 	{
 		done = 1;
 		glLinkProgram(id);
-
 		int err;
 		glGetProgramiv(id, GL_LINK_STATUS, &err);
 		if (!err)
@@ -115,6 +136,7 @@ public:
 				id, err, info);
 			fflush(stderr);
 		}
+		return *this;
 	}
 
 	void use()
@@ -128,5 +150,4 @@ public:
 		return glGetUniformLocation(id, name);
 	}
 };
-
 

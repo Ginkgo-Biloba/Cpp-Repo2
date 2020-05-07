@@ -38,9 +38,9 @@ void main()
 		{
 			q.x = z.x * z.x;
 			q.y = z.y * z.y;
-			if (q.x + q.y > 4.0)
+			if (q.x + q.y > 4.0LF)
 				break;
-			z.y = c.y + z.x * z.y * 2.0;
+			z.y = c.y + z.x * z.y * 2.0LF;
 			z.x = c.x + q.x - q.y;
 		}
 	}
@@ -51,33 +51,39 @@ void main()
 		{
 			q.x = z.x * z.x;
 			q.y = z.y * z.y;
-			if (q.x + q.y > 4.0)
+			if (q.x + q.y > 4.0LF)
 				break;
-			z.y = org.y + z.x * z.y * 2.0;
+			z.y = org.y + z.x * z.y * 2.0LF;
 			z.x = org.x + q.x - q.y;
 		}
 	}
 
 	float s = float(i) / float(iter);
 	float t, r, g, b;
-	if (true)
+	if (false)
 	{
-		t = 1.F - s;
-		r = clamp(t * s * s * s * 9.0F, 0.F, 1.F);
-		g = clamp(t * t * s * s * 15.F, 0.F, 1.F);
-		b = clamp(t * t * t * s * 8.5F, 0.F, 1.F);
+		t = 1.0 - s;
+		r = clamp(t * s * s * s * 9.0,  0.0, 1.0);
+		g = clamp(t * t * s * s * 15.0, 0.0, 1.0);
+		b = clamp(t * t * t * s * 8.5,  0.0, 1.0);
 	}
 	else
 	{
-		t = 4.F * s;
-		r = clamp(min(t - 1.5F, 4.5F - t), 0.F, 1.F);
-		g = clamp(min(t - 0.5F, 3.5F - t), 0.F, 1.F);
-		b = clamp(min(t + 0.5F, 2.5F - t), 0.F, 1.F);
+		t = 4.0 * s;
+		r = clamp(min(t - 1.5, 4.5 - t), 0.0, 1.0);
+		g = clamp(min(t - 0.5, 3.5 - t), 0.0, 1.0);
+		b = clamp(min(t + 0.5, 2.5 - t), 0.0, 1.0);
 	}
-	FragColor = vec4(r, g, b, 1.0);
+	gl_FragColor = vec4(r, g, b, 1.0);
 }
 )~";
 
+
+void errorCallback(int error, const char* description)
+{
+	fprintf(stderr, "Error %d: %s\n", error, description);
+	fflush(stderr);
+}
 
 // process all input
 // query GLFW whether relevant keys are pressed/released this frame and react accordingly
@@ -89,11 +95,30 @@ void processInput(GLFWwindow *window)
 
 
 // glfw: whenever the window size changed this callback function executes
-void framebuffer_size_callback(GLFWwindow*, int width, int height)
+void framebufferCallback(GLFWwindow*, int width, int height)
 {
 	// make sure the viewport matches the new window dimensions; note that width and 
 	// height will be significantly larger than specified on retina displays.
 	glViewport(0, 0, width, height);
+	printf("window's size: %d × %d\n", width, height);
+}
+
+
+void savePGM(GLubyte const* buf, int width, int height, int frame)
+{
+	char path[256];
+	snprintf(path, 256, R"~(G:\Gallery\%04d.ppm)~", frame);
+	FILE* fid = fopen(path, "wb");
+	if (!fid)
+	{
+		if (frame == 0)
+			printf("can not open %s for write\n", path);
+		return;
+	}
+	snprintf(path, 256, "P6\n%d %d\n255\n", width, height);
+	fputs(path, fid);
+	fwrite(buf, sizeof(GLubyte), width * height * 3, fid);
+	fclose(fid);
 }
 
 
@@ -105,10 +130,12 @@ int main(int argc, char** argv)
 
 	// glfw: initialize and configure
 	// ------------------------------
+	glfwSetErrorCallback(errorCallback);
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	// glfwWindowHint(GLFW_SAMPLES, 2);
 
 #ifdef __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -124,7 +151,8 @@ int main(int argc, char** argv)
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetFramebufferSizeCallback(window, framebufferCallback);
+	// glfwSwapInterval(0);
 
 	// glad: load all OpenGL function pointers
 	// ---------------------------------------
@@ -133,27 +161,33 @@ int main(int argc, char** argv)
 		fputs("Failed to initialize GLAD\n", stderr);
 		return -1;
 	}
+	printf("%s, %s\n",
+		reinterpret_cast<char const*>(glGetString(GL_VENDOR)),
+		reinterpret_cast<char const*>(glGetString(GL_RENDERER)));
 
 	// build and compile our shader zprogram
 	// ------------------------------------
-	GLShader vert = GLShader(GL_VERTEX_SHADER, julia_vert);
-	GLShader frag = GLShader(GL_FRAGMENT_SHADER, julia_frag);
+	GLShader vert(GL_VERTEX_SHADER);
+	GLShader frag(GL_FRAGMENT_SHADER);
+	vert.loadStr(julia_vert).compile();
+	frag.loadStr(julia_frag).compile();
 	GLProgram prog;
-	prog.attach(vert);
-	prog.attach(frag);
-	prog.link();
-	prog.use();
-	glUniform1i(prog.uniform("iter"), 255);
+	prog.attach(vert).attach(frag);
+	prog.link().use();
+	glUniform1i(prog.uniform("iter"), 512);
 	glUniform1i(prog.uniform("ijulia"), ijulia);
+	vert.release();
+	frag.release();
+	// glEnable(GL_MULTISAMPLE);
 
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 	// ------------------------------------------------------------------
 	float vertices[] = {
 		// positions
-		+1.0f, +1.0f, 0.0f,
-		+1.0f, -1.0f, 0.0f,
-		-1.0f, -1.0f, 0.0f,
-		-1.0f, +1.0f, 0.0f,
+		+1.0F, +1.0F, 0.0F,
+		+1.0F, -1.0F, 0.0F,
+		-1.0F, -1.0F, 0.0F,
+		-1.0F, +1.0F, 0.0F,
 	};
 	unsigned indices[] = {
 		0, 1, 3, // first triangle
@@ -161,23 +195,22 @@ int main(int argc, char** argv)
 	};
 	unsigned VBO, VAO, EBO;
 	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
-	glBindVertexArray(VAO);
-
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
 	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL);
 	glEnableVertexAttribArray(0);
 
+	std::vector<GLubyte> image;
 	char buffer[1024];
 	int frame = 0;
 	double ticksum = 0;
-	double radius = 1.5, ratio = 0.98;
+	double radius = 2.0, ratio = 0.98;
 	double cdir = -0.001, coff = 0.0;
 	// http://www.matrix67.com/blog/archives/292
 	// 0.45, -0.1428; 0.285, 0.01; -0.8, 0.156; -0.70176, -0.3842
@@ -186,7 +219,7 @@ int main(int argc, char** argv)
 	double ppi, ppiX, ppiY;
 	if (!ijulia)
 	{
-		jucX = 0.27322626;
+		jucX = 0.273226261;
 		jucY = 0.595153338;
 	}
 	if (argc > 3)
@@ -221,31 +254,35 @@ int main(int argc, char** argv)
 		// input
 		processInput(window);
 
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.2F, 0.3F, 0.3F, 1.0F);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glUniform2d(prog.uniform("ppi"), ppiX, ppiY);
 		glUniform2d(prog.uniform("org"), jucX + coff, jucY);
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		image.resize(wdrows * wdcols * 3);
+		//glReadPixels(0, 0, wdcols, wdrows, GL_RGB, GL_UNSIGNED_BYTE, image.data());
+		//savePGM(image.data(), wdcols, wdrows, frame);
+
+		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+		// -------------------------------------------------------------------------------
+		glfwSwapBuffers(window);
+		glfwPollEvents();
 
 		double tick1 = glfwGetTime();
 		ticksum += tick1 - tick0;
-		if ((++frame & 31) == 0)
+		if (((++frame) & 31) == 0)
 		{
 			int i = 0;
 			if (ijulia)
 				i = sprintf(buffer, "juc (%+f %+f)", jucX + coff, jucY);
 			else
 				i = sprintf(buffer, "radius %.9f", radius);
-			sprintf(buffer + i, ", frame %04d, %08.3f ms\n", frame, 1e3 * ticksum);
+			sprintf(buffer + i, ", frame %04d, %8.3fms, ~ %.2ffps",
+				frame, 1e3 * ticksum, 32.0 / ticksum);
 			puts(buffer);
 			ticksum = 0;
 		}
-
-		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-		// -------------------------------------------------------------------------------
-		glfwSwapBuffers(window);
-		glfwPollEvents();
 	}
 
 	// optional: de-allocate all resources once they've outlived their purpose:

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GLComputeShader", "GLComputeShader\GLComputeShader.vcxproj", "{AB9DCC3D-5986-4415-BEF8-8A17CBA2F352}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GLCompute", "GLCompute\GLCompute.vcxproj", "{AB9DCC3D-5986-4415-BEF8-8A17CBA2F352}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CLCopyBack", "CLCopyBack\CLCopyBack.vcxproj", "{EF28C20B-3A77-4147-B1E5-467338F5CE5E}"
 EndProject
