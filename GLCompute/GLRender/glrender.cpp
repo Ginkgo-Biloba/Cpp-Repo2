@@ -104,24 +104,6 @@ void framebufferCallback(GLFWwindow*, int width, int height)
 }
 
 
-void savePGM(GLubyte const* buf, int width, int height, int frame)
-{
-	char path[256];
-	snprintf(path, 256, R"~(G:\Gallery\%04d.ppm)~", frame);
-	FILE* fid = fopen(path, "wb");
-	if (!fid)
-	{
-		if (frame == 0)
-			printf("can not open %s for write\n", path);
-		return;
-	}
-	snprintf(path, 256, "P6\n%d %d\n255\n", width, height);
-	fputs(path, fid);
-	fwrite(buf, sizeof(GLubyte), width * height * 3, fid);
-	fclose(fid);
-}
-
-
 int main(int argc, char** argv)
 {
 	int ijulia = 0;

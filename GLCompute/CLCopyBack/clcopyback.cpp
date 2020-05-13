@@ -46,7 +46,7 @@ struct Julia
 	enum
 	{
 		ndiv = 16,
-		size = 960,
+		size = 540,
 		iter = 255,
 	};
 

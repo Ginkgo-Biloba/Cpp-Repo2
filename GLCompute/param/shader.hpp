@@ -7,17 +7,16 @@
 #undef NDEBUG
 #include <cassert>
 
-
 class GLShader
 {
-	int type;
-	std::vector<std::string> src;
+	int type, ncd;
+	std::string code;
 
 public:
 	unsigned id;
 
 	GLShader(int shaderType)
-		: id(0), type(shaderType)
+		: type(shaderType), ncd(0), id(0)
 	{
 		assert((type == GL_VERTEX_SHADER)
 			|| (type == GL_FRAGMENT_SHADER)
@@ -29,7 +28,12 @@ public:
 	GLShader& loadStr(char const* source)
 	{
 		assert(id == 0);
-		src.push_back(std::string(source));
+		char buffer[64] = { 0 };
+		snprintf(buffer, sizeof(buffer),
+			"\n\n/*_____----- %d -----_____*/\n\n",
+			++ncd);
+		code.append(source);
+		code.append(buffer);
 		return *this;
 	}
 
@@ -53,16 +57,9 @@ public:
 	void compile()
 	{
 		assert(id == 0);
-		GLsizei slen = static_cast<GLsizei>(src.size());
-		std::vector<GLchar const*> ptr;
-		std::vector<int> len;
-		for (auto const& s : src)
-		{
-			ptr.push_back(s.c_str());
-			len.push_back(static_cast<int>(s.length()));
-		}
 		id = glCreateShader(type);
-		glShaderSource(id, slen, ptr.data(), len.data());
+		char const* source = code.c_str();
+		glShaderSource(id, 1, &source, NULL);
 		glCompileShader(id);
 		int err;
 		glGetShaderiv(id, GL_COMPILE_STATUS, &err);
@@ -82,7 +79,7 @@ public:
 		if (id)
 			glDeleteShader(id);
 		id = 0;
-		src.clear();
+		code.clear();
 	}
 
 	~GLShader()
@@ -103,7 +100,7 @@ public:
 	unsigned id;
 
 	GLProgram()
-		: id(0), done(0)
+		: done(0), id(0)
 	{
 		id = glCreateProgram();
 	}
@@ -150,4 +147,27 @@ public:
 		return glGetUniformLocation(id, name);
 	}
 };
+
+
+void savePGM(GLubyte const* buf, int width, int height, int frame)
+{
+	char path[256];
+	snprintf(path, 256, R"~(G:\Gallery\%04d.ppm)~", frame);
+	FILE* fid = fopen(path, "wb");
+	if (!fid)
+	{
+		if (frame == 0)
+		{
+			printf("can not open %s for write\n", path);
+			perror("create file error");
+		}
+		return;
+	}
+	snprintf(path, 256, "P6\n%d %d\n255\n", width, height);
+	fputs(path, fid);
+	fwrite(buf, sizeof(GLubyte), width * height * 3, fid);
+	fclose(fid);
+}
+
+
 

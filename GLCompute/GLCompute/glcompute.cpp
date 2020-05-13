@@ -8,6 +8,7 @@ int divup(int x, int y) { return (x + y - 1) / y; }
 
 static char const* julia_vert = R"~(
 #version 430 core
+
 layout (location = 0) in vec2 pos;
 out vec2 coord;
 
@@ -22,13 +23,30 @@ void main()
 
 static char const* julia_frag = R"~(
 #version 430 core
+
 layout (binding = 0) uniform sampler2D siter;
 in vec2 coord;
+uniform vec2 fwd;
 
 void main()
 {
-	float s = texture2D(siter, coord).x;
 	float t, r, g, b;
+	float s = 0.0;
+	if (true)
+	{
+		s += 1.0 * texture(siter, vec2(coord.x - fwd.x, coord.y - fwd.y)).x;
+		s += 2.0 * texture(siter, vec2(coord.x,         coord.y - fwd.y)).x;
+		s += 1.0 * texture(siter, vec2(coord.x + fwd.x, coord.y - fwd.y)).x;
+		s += 2.0 * texture(siter, vec2(coord.x - fwd.x, coord.y        )).x;
+		s += 4.0 * texture(siter, vec2(coord.x        , coord.y        )).x;
+		s += 2.0 * texture(siter, vec2(coord.x + fwd.x, coord.y        )).x;
+		s += 1.0 * texture(siter, vec2(coord.x - fwd.x, coord.y + fwd.y)).x;
+		s += 2.0 * texture(siter, vec2(coord.x        , coord.y + fwd.y)).x;
+		s += 1.0 * texture(siter, vec2(coord.x + fwd.x, coord.y + fwd.y)).x;
+		s *= 0.0625;
+	}
+	else 
+		s = texture(siter, coord).x;
 	if (false)
 	{
 		t = 1.0 - s;
@@ -63,7 +81,7 @@ uniform dvec2 hwd;
 // gl_GlobalInvocationID is a uvec3 variable giving the global ID of the thread,
 // gl_LocalInvocationID is the local index within the work group, and
 // gl_WorkGroupID is the work group's index
-layout (local_size_x = 32, local_size_y = 32) in;
+layout (local_size_x = 16, local_size_y = 16) in;
 layout (r32f, binding = 0) writeonly uniform image2D siter;
 
 void main()
@@ -126,7 +144,7 @@ void framebufferCallback(GLFWwindow*, int width, int height)
 	// make sure the viewport matches the new window dimensions; note that width and 
 	// height will be significantly larger than specified on retina displays.
 	glViewport(0, 0, width, height);
-	printf("window's size: %d × %d\n", width, height);
+	printf("\twindow size: %d × %d\n", width, height);
 }
 
 
@@ -151,7 +169,7 @@ int main(int argc, char** argv)
 
 	// glfw window creation
 	// --------------------
-	GLFWwindow* window = glfwCreateWindow(600, 600, "Julia", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(960, 540, "Julia", NULL, NULL);
 	if (window == NULL)
 	{
 		fputs("Failed to create GLFW window\n", stderr);
@@ -223,8 +241,8 @@ int main(int argc, char** argv)
 	char buffer[1024];
 	int frame = 0;
 	double ticksum = 0;
-	double radius = 1.5, ratio = 0.98;
-	double cdir = -0.001, coff = 0.0;
+	double radius = 2.0, ratio = 0.98;
+	double cdir = -0.0002, coff = 0.0;
 	// http://www.matrix67.com/blog/archives/292
 	// 0.45, -0.1428; 0.285, 0.01; -0.8, 0.156; -0.70176, -0.3842
 	double jucX = -0.835, jucY = -0.2321, ppi;
@@ -249,7 +267,7 @@ int main(int argc, char** argv)
 		if (ijulia)
 		{
 			coff += cdir;
-			if (coff < -0.5 || 0.5 < coff)
+			if (coff < -0.25 || 0.25 < coff)
 				cdir = -cdir;
 		}
 		else
@@ -268,7 +286,7 @@ int main(int argc, char** argv)
 		if ((srows != wdrows) || (scols != wdcols))
 		{
 			srows = wdrows; scols = wdcols;
-			printf("new texture: %d × %d\n", scols, srows);
+			// printf("new texture: %d × %d\n", scols, srows);
 			glDeleteTextures(1, &siter);
 			glGenTextures(1, &siter);
 			glBindTexture(GL_TEXTURE_2D, siter);
@@ -276,11 +294,11 @@ int main(int argc, char** argv)
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			// Because we're also using this tex as an image (in order to write to it),
 			// we bind it to an image unit as well
 			glBindImageTexture(0, siter, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
-			image.resize(srows * scols);
+			image.resize(srows * scols * 3);
 		}
 
 		// compute
@@ -288,17 +306,20 @@ int main(int argc, char** argv)
 		glUniform1d(calc.uniform("ppi"), ppi);
 		glUniform2d(calc.uniform("org"), jucX + coff, jucY);
 		glUniform2d(calc.uniform("hwd"), wdcols * 0.5, wdrows * 0.5);
-		glDispatchCompute(divup(wdcols, 32), divup(wdcols, 32), 1);
-		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		glDispatchCompute(divup(wdcols, 16), divup(wdcols, 16), 1);
+		// glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 		// glMemoryBarrier(GL_ALL_BARRIER_BITS);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_UNSIGNED_BYTE, image.data());
+		// glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_UNSIGNED_BYTE, image.data());
 
 		// render
 		prog.use();
+		glUniform2f(prog.uniform("fwd"), 1.F / wdcols, 1.F / wdrows);
 		glClearColor(0.2F, 0.3F, 0.3F, 1.0F);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		// glReadPixels(0, 0, wdcols, wdrows, GL_RGB, GL_UNSIGNED_BYTE, image.data());
+		// savePGM(image.data(), wdcols, wdrows, frame);
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		// -------------------------------------------------------------------------------
