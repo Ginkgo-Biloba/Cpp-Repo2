@@ -16,7 +16,7 @@ __kernel void julia_32f(
 	int x = get_global_id(0);
 	int y = get_global_id(1);
 	if (x >= cols || y >= rows)
-		return;
+		x = y = 0;
 
 	double cx = orgX + (x - cols / 2) * ppi;
 	double cy = orgY + (y - rows / 2) * ppi;
@@ -93,7 +93,7 @@ struct Julia
 			float b = min(max(min(n + 0.5F, -n + 2.5F), 0.F), 1.F);
 			ptr[255 - i] = Vec3f(b, g, r);
 		}
-
+		
 		err = clGetPlatformIDs(1, &plat, &nplat);
 		checkError("clGetPlatformIDs");
 

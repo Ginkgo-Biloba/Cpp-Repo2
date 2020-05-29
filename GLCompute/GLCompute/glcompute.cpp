@@ -187,9 +187,13 @@ int main(int argc, char** argv)
 		fputs("Failed to initialize GLAD\n", stderr);
 		return -1;
 	}
-	printf("%s, %s\n",
+
+	GLint maxvaryvec;
+	glGetIntegerv(GL_MAX_VARYING_VECTORS, &maxvaryvec);
+	printf("%s, %s, MAX_VARYING_VECTORS %d\n",
 		reinterpret_cast<char const*>(glGetString(GL_VENDOR)),
-		reinterpret_cast<char const*>(glGetString(GL_RENDERER)));
+		reinterpret_cast<char const*>(glGetString(GL_RENDERER)),
+		static_cast<int>(maxvaryvec));
 
 	// build and compile our shader zprogram
 	// ------------------------------------
@@ -306,7 +310,7 @@ int main(int argc, char** argv)
 		glUniform1d(calc.uniform("ppi"), ppi);
 		glUniform2d(calc.uniform("org"), jucX + coff, jucY);
 		glUniform2d(calc.uniform("hwd"), wdcols * 0.5, wdrows * 0.5);
-		glDispatchCompute(divup(wdcols, 16), divup(wdcols, 16), 1);
+		glDispatchCompute(divup(wdcols, 16), divup(wdrows, 16), 1);
 		// glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 		// glMemoryBarrier(GL_ALL_BARRIER_BITS);
 		// glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_UNSIGNED_BYTE, image.data());
