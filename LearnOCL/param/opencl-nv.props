@@ -3,10 +3,9 @@
 	<ImportGroup Label="PropertySheets" />
 	<PropertyGroup Label="UserMacros" />
 	<PropertyGroup>
-		<cldir>D:\CopyApp\lightOCLSDK</cldir>
-		<IncludePath>$(cldir)\include;$(IncludePath)</IncludePath>
-		<LibraryPath Condition="'$(PlatformTarget)'=='x86'">$(cldir)\lib-x86;$(LibraryPath)</LibraryPath>
-		<LibraryPath Condition="'$(PlatformTarget)'=='x64'">$(cldir)\lib-x64;$(LibraryPath)</LibraryPath>
+		<icddir>E:\CopyApp\opencl-nv</icddir>
+		<IncludePath>$(icddir)\include;$(IncludePath)</IncludePath>
+		<LibraryPath>$(icddir)\$(PlatformTarget);$(LibraryPath)</LibraryPath>
 	</PropertyGroup>
 	<ItemDefinitionGroup>
 		<Link>
