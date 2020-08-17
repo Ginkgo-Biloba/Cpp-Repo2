@@ -134,8 +134,6 @@ struct Julia
 
 	~Julia()
 	{
-		clFlush(cmdq);
-		clFinish(cmdq);
 		clReleaseKernel(kernel);
 		clReleaseProgram(prog);
 		clReleaseMemObject(cl_src);
@@ -146,7 +144,7 @@ struct Julia
 
 	void run()
 	{
-		size_t lsize = 8;
+		size_t lsize = 16;
 		size_t gsize = (size + lsize - 1) / lsize * lsize;
 		cl_int cl_size = size, cl_iter = iter;
 		size_t global_size[] = { gsize, gsize };
@@ -165,6 +163,7 @@ struct Julia
 		err |= clEnqueueNDRangeKernel(cmdq, kernel, 2, NULL, global_size, local_size, 0, NULL, NULL);
 		checkError("clEnqueueNDRangeKernel");
 
+		clEnqueueBarrierWithWaitList(cmdq, 0, NULL, NULL);
 		clEnqueueReadBuffer(cmdq, cl_dst, CL_TRUE, 0, image.step[0] * size, image.data, 0, NULL, NULL);
 		checkError("clEnqueueReadBuffer");
 	}

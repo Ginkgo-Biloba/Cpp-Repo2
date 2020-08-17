@@ -3,7 +3,7 @@
 	<ImportGroup Label="PropertySheets" />
 	<PropertyGroup Label="UserMacros" />
 	<PropertyGroup>
-		<glfwdir>E:\CopyApp\glfw-3.3</glfwdir>
+		<glfwdir>c:\copyapp\glfw-3.3</glfwdir>
 		<IncludePath>$(glfwdir)\include;$(IncludePath)</IncludePath>
 		<LibraryPath Condition="'$(Configuration)'=='Debug'">$(glfwdir)\$(PlatformTarget)_Debug;$(LibraryPath)</LibraryPath>
 		<LibraryPath Condition="'$(Configuration)'=='Release'">$(glfwdir)\$(PlatformTarget)_RelWithDebInfo;$(LibraryPath)</LibraryPath>

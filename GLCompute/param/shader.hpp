@@ -152,7 +152,7 @@ public:
 void savePGM(GLubyte const* buf, int width, int height, int frame)
 {
 	char path[256];
-	snprintf(path, 256, R"~(G:\Gallery\%04d.ppm)~", frame);
+	snprintf(path, 256, R"~(G:\Gallery\%04d.pgm)~", frame);
 	FILE* fid = fopen(path, "wb");
 	if (!fid)
 	{
@@ -163,7 +163,7 @@ void savePGM(GLubyte const* buf, int width, int height, int frame)
 		}
 		return;
 	}
-	snprintf(path, 256, "P6\n%d %d\n255\n", width, height);
+	snprintf(path, 256, "P5\n%d %d\n255\n", width, height);
 	fputs(path, fid);
 	fwrite(buf, sizeof(GLubyte), width * height * 3, fid);
 	fclose(fid);
