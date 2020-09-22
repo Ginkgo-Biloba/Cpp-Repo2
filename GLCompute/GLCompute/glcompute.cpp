@@ -27,6 +27,7 @@ static char const* julia_frag = R"~(
 layout (binding = 0) uniform sampler2D siter;
 in vec2 coord;
 uniform vec2 fwd;
+out vec4 fragcolor;
 
 void main()
 {
@@ -61,10 +62,9 @@ void main()
 		g = clamp(min(t - 0.5, 3.5 - t), 0.0, 1.0);
 		b = clamp(min(t + 0.5, 2.5 - t), 0.0, 1.0);
 	}
-	gl_FragColor = vec4(r, g, b, 1.0);
+	fragcolor = vec4(r, g, b, 1.0);
 }
 )~";
-
 
 
 static char const* julia_comp = R"~(
@@ -195,7 +195,7 @@ int main(int argc, char** argv)
 		reinterpret_cast<char const*>(glGetString(GL_RENDERER)),
 		static_cast<int>(maxvaryvec));
 
-	// build and compile our shader zprogram
+	// build and compile our shader program
 	// ------------------------------------
 	GLShader vert(GL_VERTEX_SHADER);
 	GLShader frag(GL_FRAGMENT_SHADER);
@@ -312,7 +312,6 @@ int main(int argc, char** argv)
 		glUniform2d(calc.uniform("hwd"), wdcols * 0.5, wdrows * 0.5);
 		glDispatchCompute(divup(wdcols, 16), divup(wdrows, 16), 1);
 		// glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-		// glMemoryBarrier(GL_ALL_BARRIER_BITS);
 		// glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_UNSIGNED_BYTE, image.data());
 
 		// render

@@ -20,7 +20,7 @@ void main()
 static char const* julia_frag = R"~(
 #version 430 core
 in vec2 coord;
-out vec4 FragColor;
+out vec4 fragcolor;
 
 uniform int iter;
 uniform int ijulia;
@@ -74,7 +74,7 @@ void main()
 		g = clamp(min(t - 0.5, 3.5 - t), 0.0, 1.0);
 		b = clamp(min(t + 0.5, 2.5 - t), 0.0, 1.0);
 	}
-	gl_FragColor = vec4(r, g, b, 1.0);
+	fragcolor = vec4(r, g, b, 1.0);
 }
 )~";
 
@@ -156,7 +156,7 @@ int main(int argc, char** argv)
 	GLProgram prog;
 	prog.attach(vert).attach(frag);
 	prog.link().use();
-	glUniform1i(prog.uniform("iter"), 512);
+	glUniform1i(prog.uniform("iter"), 1024);
 	glUniform1i(prog.uniform("ijulia"), ijulia);
 	vert.release();
 	frag.release();
