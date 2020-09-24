@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{E94DCAB0-5CDF-4092-AD28-45E0753BD145}</ProjectGuid>
+    <ProjectGuid>{4DFBDF93-606D-4C3C-ACE7-2FE437A55C7D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>hellotriangle</RootNamespace>
+    <RootNamespace>geoshader</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -155,7 +155,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\images\glad.c" />
-    <ClCompile Include="hello.cpp" />
+    <ClCompile Include="geoshader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

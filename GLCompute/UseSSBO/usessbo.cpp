@@ -60,7 +60,7 @@ static char const* source_compute = {
 
 uniform float ofs;
 uniform int rows, cols;
-layout (local_size_x = 32, local_size_y = 32) in;
+layout (local_size_x = 16, local_size_y = 16) in;
 layout (std430, binding=1) restrict buffer Array0
 {
 	int rgb[];
@@ -128,7 +128,7 @@ void framebufferCallback(GLFWwindow*, int width, int height)
 }
 
 
-int main(int argc, char** argv)
+int main()
 {
 	// glfw: initialize and configure
 	// ------------------------------
@@ -228,6 +228,8 @@ int main(int argc, char** argv)
 	std::vector<uchar> image;
 	GLuint ssbo;
 	glGenBuffers(1, &ssbo);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo);
 	GLCheckError;
 
 	// prog loop
@@ -245,23 +247,21 @@ int main(int argc, char** argv)
 		{
 			srows = wdrows;
 			scols = wdcols;
-			glDeleteBuffers(1, &ssbo);
-			glGenBuffers(1, &ssbo);
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+			// glDeleteBuffers(1, &ssbo);
+			// glBufferData 会自动删除之前的内存
 			glBufferData(GL_SHADER_STORAGE_BUFFER,
 				srows * scols * sizeof(int), NULL, GL_DYNAMIC_COPY);
-			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo);
 			image.resize(srows * scols * 3);
 			image[0] = 100;
 			GLCheckError;
 		}
-
+		
 		// compute
 		compute.use();
 		glUniform1i(compute.uniform("rows"), srows);
 		glUniform1i(compute.uniform("cols"), scols);
 		glUniform1f(compute.uniform("ofs"), static_cast<float>(ofs));
-		glDispatchCompute(divup(wdcols, 32), divup(wdrows, 32), 1);
+		glDispatchCompute(divup(wdcols, 16), divup(wdrows, 16), 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 		// render

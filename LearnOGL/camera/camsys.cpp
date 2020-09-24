@@ -1,8 +1,8 @@
-#include "../shader.hpp"
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <opencv2/highgui.hpp>
+#include "../images/shader.hpp"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);

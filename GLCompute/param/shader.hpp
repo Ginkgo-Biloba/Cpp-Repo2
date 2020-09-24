@@ -11,7 +11,7 @@
 class GLShader
 {
 	int type, ncd;
-	std::string code;
+	std::vector<std::string> code;
 
 public:
 	unsigned id;
@@ -29,12 +29,7 @@ public:
 	GLShader& loadStr(char const* source)
 	{
 		assert(id == 0);
-		char buffer[64] = { 0 };
-		snprintf(buffer, sizeof(buffer),
-			"\n\n/*_____----- %d -----_____*/\n\n",
-			++ncd);
-		code.append(source);
-		code.append(buffer);
+		code.emplace_back(source);
 		return *this;
 	}
 
@@ -46,11 +41,12 @@ public:
 		if (fid.is_open())
 		{
 			size_t len = static_cast<size_t>(fid.tellg());
-			std::vector<char> obj(len + 1);
+			std::string obj;
+			obj.resize(len + 1);
 			fid.seekg(std::ios::beg);
-			fid.read(obj.data(), len);
+			fid.read(&(obj[0]), len);
 			fid.close();
-			loadStr(obj.data());
+			code.push_back(move(obj));
 		}
 		return *this;
 	}
@@ -59,8 +55,12 @@ public:
 	{
 		assert(id == 0);
 		id = glCreateShader(type);
-		char const* source = code.c_str();
-		glShaderSource(id, 1, &source, NULL);
+		int len = static_cast<int>(code.size());
+		std::vector<char const*> src;
+		src.reserve(len);
+		for (std::string& s : code)
+			src.push_back(s.data());
+		glShaderSource(id, len, src.data(), NULL);
 		glCompileShader(id);
 		int err;
 		glGetShaderiv(id, GL_COMPILE_STATUS, &err);
@@ -235,6 +235,8 @@ void APIENTRY glDebugOutput(GLenum source,
 	GLenum type, GLuint id, GLenum severity, GLsizei length,
 	const GLchar* message, void* userParam)
 {
+	_CRT_UNUSED(length);
+	_CRT_UNUSED(userParam);
 	// 忽略一些不重要的错误/警告代码
 	if (id == 131169 || id == 131185 || id == 131218 || id == 131204)
 		return;
