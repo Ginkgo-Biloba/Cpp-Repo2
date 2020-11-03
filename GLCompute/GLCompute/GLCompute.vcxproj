@@ -155,7 +155,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\param\glad.cpp" />
     <ClCompile Include="glcompute.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -1,6 +1,14 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
-#include <cstdio>
-#include <cstdint>
+
+#ifdef _CONSOLE
+#  include <cstdio>
+#else 
+#  define _CRT_SECURE_NO_WARNINGS
+#  define WIN32_LEAN_AND_MEAN
+#  define NOMINMAX
+#  include <atlstr.h>
+#endif
+
 #include <string>
 #include <vector>
 #include <fstream>
@@ -66,12 +74,20 @@ public:
 		glGetShaderiv(id, GL_COMPILE_STATUS, &err);
 		if (!err)
 		{
-			char info[1024];
-			glGetShaderInfoLog(id, 1023, NULL, info);
+			char info[4096];
+			glGetShaderInfoLog(id, 4095, NULL, info);
+#ifdef _CONSOLE
 			fprintf(stderr,
 				"===== GLShader %u type %d COMPILE ERROR %d =====\n%s\n",
 				id, type, err, info);
 			fflush(stderr);
+#else 
+			CStringA e;
+			e.Format(
+				"===== GLShader %u type %d COMPILE ERROR %d =====\n%s\n",
+				id, type, err, info);
+			MessageBoxA(NULL, e.GetString(), "compile error", MB_OK);
+#endif
 		}
 	}
 
@@ -127,12 +143,20 @@ public:
 		glGetProgramiv(id, GL_LINK_STATUS, &err);
 		if (!err)
 		{
-			char info[1024];
-			glGetProgramInfoLog(id, 1023, NULL, info);
+			char info[4096];
+#ifdef _CONSOLE
 			fprintf(stderr,
 				"===== GLProgram %u LINK ERROR %d ==========\n%s\n",
 				id, err, info);
 			fflush(stderr);
+#else 
+			CStringA e;
+			glGetProgramInfoLog(id, 4095, NULL, info);
+			e.Format(
+				"===== GLProgram %u LINK ERROR %d ==========\n%s\n",
+				id, err, info);
+			MessageBoxA(NULL, e.GetString(), "link error", MB_OK);
+#endif
 		}
 		return *this;
 	}
@@ -166,7 +190,14 @@ bool ppmWrite(char const* name,
 	fid.open(name, std::ios::trunc | std::ios::binary);
 	if (!fid)
 	{
-		printf("Can not write %s\n", name);
+#ifdef _CONSOLE
+		fprintf(stderr, "can not write %s", name);
+		fflush(stderr);
+#else 
+		CStringA e;
+		e.Format("can not write %s", name);
+		MessageBoxA(NULL, e.GetString(), "io error", MB_OK);
+#endif
 		return false;
 	}
 
@@ -223,7 +254,14 @@ GLenum glCheckError_(const char *file, int line)
 		case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
 		default: error = "UNKNOWN_ERROR";
 		}
-		printf("%s | %s (%d)\n", error, file, line);
+#ifdef _CONSOLE
+		fprintf(stderr, "%s | %s (%d)\n", error, file, line);
+		fflush(stderr);
+#else 
+		CStringA e;
+		e.Format("%s | %s (%d)\n", error, file, line);
+		MessageBoxA(NULL, e.GetString(), __FUNCTION__, MB_OK);
+#endif
 	}
 	return errorCode;
 }

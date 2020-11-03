@@ -1,14 +1,14 @@
-﻿#include "../param/shader.hpp"
+﻿#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <atlstr.h>
+#include "../param/shader.hpp"
 #include <GLFW/glfw3.h>
+
 using uchar = unsigned char;
 
-
-int min(int x, int y) { return y < x ? y : x; }
+static char const* middlepath = R"~(G:\Sample\MidImg\)~";
 
 int divup(int x, int y) { return (x + y - 1) / y; }
-
-
-static char const* middlepath = R"~(G:\Sample\MidImg\)~";
 
 
 static char const* source_vertex = {
@@ -41,15 +41,28 @@ out vec4 fragcolor;
 
 void main()
 {
-	float val = 1.0 / 255.0;
-	ivec2 pos = ivec2(gl_FragCoord.xy);
-	pos.x = min(pos.x, cols - 1);
-	pos.y = min(pos.y, rows - 1);
-	int idx = (pos.y * cols + pos.x);
-	idx = image.rgb[idx];
-	float R = (idx >> 16) * val;
-	float G = ((idx >> 8) & 0xff) * val;
-	float B = (idx & 0xff) * val;
+	int ix = clamp(int(gl_FragCoord.x), 1, cols - 2);
+	int iy = clamp(int(gl_FragCoord.y), 1, rows - 2);
+#if 0
+	float R = 0.0, G = 0.0, B = 0.0;
+	for (int h = -1; h <= 1; ++h)
+		for (int w = -1; w <= 1; ++w)
+		{
+			int val = (iy + h) * cols + (ix + w);
+			val = image.rgb[val];
+			R += (val >> 16);
+			G += ((val >> 8) & 0xff);
+			B += (val & 0xff);
+		}
+	float s = 1.0 / (255.0 * 9.0);
+	R = R * s; G = G * s; B = B * s;
+#else
+	int val = image.rgb[iy * cols + ix];
+	float s = 1.0 / 255.0;
+	float R = s * (val >> 16);
+	float G = s * ((val >> 8) & 0xff);
+	float B = s * (val & 0xff);
+#endif
 	fragcolor = vec4(R, G, B, 1.0);
 }
 )~" };
@@ -66,47 +79,62 @@ layout (std430, binding=1) restrict buffer Array0
 	int rgb[];
 } image;
 
+int colormap(float v, float a, float b)
+{
+	float R = 1.0, G = 1.0, B = 1.0;
+	float d = max(b - a, 1e-7);
+	v = (clamp(v, a, b) - a) / d;
+	if (v < 0.25) 
+	{
+		R = 0;
+		G = 4.0 * v;
+		B = 1.0 - G;
+	} 
+	else if (v < 0.5)
+	{
+		R = 0;
+		B = 1 + 4.0 * (0.25 - v);
+	}
+	else if (v < 0.75)
+	{
+		R = 4.0 * (v - 0.5);
+		B = 0;
+	}
+	else
+	{
+		G = 1 + 4.0 * (0.75 - v);
+		B = 0;
+	}
+	int x = int(R * 255.0) << 16;
+	int y = int(G * 255.0) << 8;
+	int z = int(B * 255.0);
+	return x + y + z;
+}
+
 void main()
 {
-	ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
-	pos.x = min(pos.x, cols - 1);
-	pos.y = min(pos.y, rows - 1);
-	int idx = (pos.y * cols + pos.x);
-	float x, y, R, G, B;
-	
-	x = pos.x + pos.y;
-	y = rows + cols;
-	R = x / y + ofs;
-	x = pos.x;
-	y = cols;
-	G = x / y - ofs * 0.7;
-	x = pos.y;
-	y = rows;
-	B = x / y + ofs * 0.5;
-
-	// x = gl_LocalInvocationID.x + gl_LocalInvocationID.y;
-	// y = gl_WorkGroupSize.x + gl_WorkGroupSize.y;
-	// R = x / y + ofs;
-	// x = gl_WorkGroupID.x;
-	// y = gl_NumWorkGroups.x;
-	// G = x / y - ofs * 0.7;
-	// x = gl_WorkGroupID.y;
-	// y = gl_NumWorkGroups.y;
-	// B = x / y + ofs * 0.3;
-	
-	R = abs(R - round(R)) * (2.0 * 255.0);
-	G = abs(G - round(G)) * (2.0 * 255.0);
-	B = abs(B - round(B)) * (2.0 * 255.0);	
-	pos.x = (int(R) << 16) + (int(G) << 8) + int(B);
-	image.rgb[idx] = pos.x;
+	int ix = min(int(gl_GlobalInvocationID.x), cols - 1);
+	int iy = min(int(gl_GlobalInvocationID.y), rows - 1);
+	float x = float(cols - 1);
+	float y = float(rows - 1);
+	float s = (ofs + 4.0) / min(x, y);
+	x = (x * 0.50 - ix) * s;
+	y = (y * 0.75 - iy) * s;
+	float r = length(vec2(x, y));
+	float t = y / (r + 1e-7);
+	float z = (1 + t - r); // <= 2.0 
+	t = max(z * 0.5, 0.0); 
+	t = pow(t, 0.1 + 0.09 * ofs);
+	image.rgb[iy * cols + ix] = colormap(t, 0.0, 1.0);
 }
 )~" };
 
 
 static void errorCallback(int error, const char* description)
 {
-	fprintf(stderr, "Error %d: %s\n", error, description);
-	fflush(stderr);
+	CStringA e;
+	e.Format("Error %d: %s\n", error, description);
+	MessageBoxA(NULL, e.GetString(), "GLFW ERROR", MB_OK);
 }
 
 // process all input
@@ -121,14 +149,17 @@ void processInput(GLFWwindow *window)
 // glfw: whenever the window size changed this callback function executes
 void framebufferCallback(GLFWwindow*, int width, int height)
 {
-	// make sure the viewport matches the new window dimensions; note that width and 
-	// height will be significantly larger than specified on retina displays.
+	// make sure the viewport matches the new window dimensions
+	// note that width and height will be significantly larger than specified on retina displays.
 	glViewport(0, 0, width, height);
-	printf("\twindow size: %d × %d\n", width, height);
 }
 
 
+#ifdef _CONSOLE
 int main()
+#else
+int WINAPI WinMain(HINSTANCE, HINSTANCE, PSTR, int)
+#endif
 {
 	// glfw: initialize and configure
 	// ------------------------------
@@ -146,42 +177,32 @@ int main()
 
 	// glfw window creation
 	// --------------------
-	GLFWwindow* window = glfwCreateWindow(960, 540, "SSBO Example", NULL, NULL);
-	if (window == NULL)
+	CStringA title("Heart"), info;
+	GLFWwindow* window = glfwCreateWindow(600, 600, title.GetString(), NULL, NULL);
+	if (!window)
 	{
-		fputs("Failed to create GLFW window\n", stderr);
+		MessageBoxA(NULL, "failed to create GLFW window", "error", MB_OK);
 		glfwTerminate();
-		return -1;
+		return 1;
 	}
 	// glfwHideWindow(window);
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebufferCallback);
-	// glfwSwapInterval(6);
+	// glfwSwapInterval(0);
 
 	// glad: load all OpenGL function pointers
 	// ---------------------------------------
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
-		fputs("Failed to initialize GLAD\n", stderr);
-		return -1;
+		MessageBoxA(NULL, "failed to initialize GLAD", "error", MB_OK);
+		return 2;
 	}
 
-	int flags;
-	glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
-	{
-		printf("OpenGL Debug Context\n");
-		//glDebugMessageControl(GL_DEBUG_SOURCE_API,
-			//GL_DEBUG_TYPE_ERROR, GL_DEBUG_SEVERITY_HIGH, 0, NULL, GL_TRUE);
-		glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_ERROR, 0,
-			GL_DEBUG_SEVERITY_MEDIUM, -1, "error message here");
-	}
 	GLint maxVaryingVector;
 	glGetIntegerv(GL_MAX_VARYING_VECTORS, &maxVaryingVector);
-	printf("%s, %s, MAX_VARYING_VECTORS %d\n",
+	title.Format("%s, %s",
 		reinterpret_cast<char const*>(glGetString(GL_VENDOR)),
-		reinterpret_cast<char const*>(glGetString(GL_RENDERER)),
-		static_cast<int>(maxVaryingVector));
+		reinterpret_cast<char const*>(glGetString(GL_RENDERER)));
 	glEnable(GL_FRAMEBUFFER_SRGB);
 
 	// build and compile our shader program
@@ -218,12 +239,11 @@ int main()
 	GLProgram compute;
 	comp.loadStr(source_compute).compile();
 	compute.attach(comp);
-	compute.link().use();
+	compute.link();
 	comp.release();
 	GLCheckError;
 
 	int frame = 0;
-	char name[256];
 	int srows = 0, scols = 0;
 	std::vector<uchar> image;
 	GLuint ssbo;
@@ -237,7 +257,7 @@ int main()
 	double tickstart = glfwGetTime();
 	while (!glfwWindowShouldClose(window))
 	{
-		double ofs = glfwGetTime() * 0.5;
+		double cur = sin(glfwGetTime() * 3.0);
 		int wdrows, wdcols;
 		processInput(window);
 		glfwGetWindowSize(window, &wdcols, &wdrows);
@@ -255,12 +275,12 @@ int main()
 			image[0] = 100;
 			GLCheckError;
 		}
-		
+
 		// compute
 		compute.use();
 		glUniform1i(compute.uniform("rows"), srows);
 		glUniform1i(compute.uniform("cols"), scols);
-		glUniform1f(compute.uniform("ofs"), static_cast<float>(ofs));
+		glUniform1f(compute.uniform("ofs"), static_cast<float>(cur));
 		glDispatchCompute(divup(wdcols, 16), divup(wdrows, 16), 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
@@ -268,7 +288,7 @@ int main()
 		render.use();
 		glUniform1i(render.uniform("rows"), srows);
 		glUniform1i(render.uniform("cols"), scols);
-		glClearColor(0.2F, 0.3F, 0.3F, 1.0F);
+		glClearColor(0.2F, 0.5F, 0.3F, 1.0F);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -285,21 +305,19 @@ int main()
 			image[k + 2] = static_cast<uchar>(v);
 		}
 		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-		snprintf(name, sizeof(name), "%s%04d.ppm", middlepath, frame);
-		ppmWrite(name, image.data(), srows, scols, 3, true);
+		// glReadPixels(0, 0, scols, srows, GL_BGR, GL_UNSIGNED_BYTE, image.data());
+		info.Format("%s%04d.ppm", middlepath, frame);
+		ppmWrite(info.GetString(), image.data(), srows, scols, 3, true);
 #endif
 
-		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
-		if (((++frame) & 31) == 0)
+		if (((++frame) & 63) == 0)
 		{
-			ofs = glfwGetTime() - tickstart;
-			snprintf(name, sizeof(name),
-				"frame %4d, %8.3fms, ~ %.2ffps",
-				frame, 1e3 * ofs, 32.0 / ofs);
-			puts(name);
+			cur = 64.0 / (glfwGetTime() - tickstart);
+			info.Format("%s, %.2ffps", title.GetString(), cur);
+			glfwSetWindowTitle(window, info.GetString());
 			tickstart = glfwGetTime();
 		}
 	}
@@ -312,3 +330,4 @@ int main()
 	glfwTerminate();
 	return 0;
 }
+
