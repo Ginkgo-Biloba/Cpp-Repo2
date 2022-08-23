@@ -144,6 +144,7 @@ public:
 		if (!err)
 		{
 			char info[4096];
+			glGetProgramInfoLog(id, 4095, NULL, info);
 #ifdef _CONSOLE
 			fprintf(stderr,
 				"===== GLProgram %u LINK ERROR %d ==========\n%s\n",
@@ -151,7 +152,6 @@ public:
 			fflush(stderr);
 #else 
 			CStringA e;
-			glGetProgramInfoLog(id, 4095, NULL, info);
 			e.Format(
 				"===== GLProgram %u LINK ERROR %d ==========\n%s\n",
 				id, err, info);

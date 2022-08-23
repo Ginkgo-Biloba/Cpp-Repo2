@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\glad.c">
+    <ClCompile Include="unish.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="unish.cpp">
+    <ClCompile Include="..\images\glad.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

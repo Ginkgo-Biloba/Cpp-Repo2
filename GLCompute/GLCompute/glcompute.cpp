@@ -5,6 +5,31 @@ int min(int x, int y) { return y < x ? y : x; }
 
 int divup(int x, int y) { return (x + y - 1) / y; }
 
+static GLenum _glCheckError(const char* file, int line)
+{
+	GLenum errorCode;
+	while ((errorCode = glGetError()) != GL_NO_ERROR)
+	{
+		char const* error;
+		switch (errorCode)
+		{
+		case GL_INVALID_ENUM: error = "INVALID_ENUM"; break;
+		case GL_INVALID_VALUE: error = "INVALID_VALUE"; break;
+		case GL_INVALID_OPERATION: error = "INVALID_OPERATION"; break;
+		case GL_STACK_OVERFLOW: error = "STACK_OVERFLOW"; break;
+		case GL_STACK_UNDERFLOW: error = "STACK_UNDERFLOW"; break;
+		case GL_OUT_OF_MEMORY: error = "OUT_OF_MEMORY"; break;
+		case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
+		default: error = "UNKNOWN_ERROR";
+		}
+		fprintf(stderr, "%s | %s (%d)\n", error, file, line);
+		fflush(stderr);
+	}
+	return errorCode;
+}
+
+#define GLCheckError _glCheckError(__FILE__, __LINE__)
+
 
 static char const* julia_vert = R"~(
 #version 430 core
@@ -303,6 +328,7 @@ int main(int argc, char** argv)
 			// we bind it to an image unit as well
 			glBindImageTexture(0, siter, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
 			image.resize(srows * scols * 3);
+			GLCheckError;
 		}
 
 		// compute

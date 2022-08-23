@@ -3,9 +3,9 @@
 	<ImportGroup Label="PropertySheets" />
 	<PropertyGroup Label="UserMacros" />
 	<PropertyGroup>
-		<cvdir>C:\copyapp\opencv-2.4.13</cvdir>
+		<cvdir>C:\copyapp\opencv-2.4.13.7</cvdir>
 		<IncludePath>$(cvdir)\include;$(IncludePath)</IncludePath>
-		<LibraryPath>$(cvdir)\lib-vc14_$(PlatformTarget);$(LibraryPath)</LibraryPath>
+		<LibraryPath>$(cvdir)\$(PlatformTarget)-lib;$(LibraryPath)</LibraryPath>
 	</PropertyGroup>
 	<ItemDefinitionGroup>
 		<Link Condition="'$(Configuration)'=='Debug'">
