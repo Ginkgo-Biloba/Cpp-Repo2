@@ -1,0 +1,54 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "mingw64",
+			"type": "process",
+			"command": "${env:mingw}\\bin\\g++.exe",
+			"args": [
+				// "--trace",
+				"-std=c++14",
+				"-Wall",
+				"-Wextra",
+				"-pedantic",
+				"-Wcast-align",
+				"-Wpointer-arith",
+				"-Wshadow",
+				// "-Wconversion",
+				// "-Werror",
+				"-Wno-char-subscripts",
+				"-msse4.2",
+				"-O1",
+				"-ggdb",
+				"-o",
+				"learnocl.exe",
+				"${fileDirname}\\${fileBasenameNoExtension}.cpp",
+				"-D_DEBUG",
+				"-D_WIN32_WINNT=0x0601",
+				"-IC:\\copyapp\\glfw-3.3.8\\include",
+				"-LC:\\copyapp\\glfw-3.3.8\\mingw64-lib",
+				"-IC:\\copyapp\\opencv-2.4.13.7\\include",
+				"-LC:\\copyapp\\opencv-2.4.13.7\\mingw64-lib",
+				"-lopencv_core2413",
+				"-lopencv_imgproc2413",
+				"-llibjpeg",
+				"-lOpenCL",
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"problemMatcher": "$gcc"
+		},
+	]
+}

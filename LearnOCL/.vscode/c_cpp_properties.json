@@ -1,0 +1,35 @@
+{
+	"configurations": [
+		{
+			"name": "mingw64",
+			"defines": [
+				"_DEBUG",
+				"_WIN32_WINNT=0x0601" // Windows 7
+			],
+			"compilerArgs": ["-msse4.2"],
+			"windowsSdkVersion": "8.1",
+			"compilerPath": "${env:mingw}/bin/g++.exe",
+			"cStandard": "c11",
+			"cppStandard": "c++14",
+			"intelliSenseMode": "windows-gcc-x64",
+			"includePath": [
+				"${env:mingw}/x86_64-w64-mingw32/include",
+				"${env:mingw}/lib/gcc/x86_64-w64-mingw32/5.1.0/include",
+				"${env:mingw}/lib/gcc/x86_64-w64-mingw32/5.1.0/include/c++",
+				"C:/copyapp/glfw-3.3.8/include",
+				"C:/copyapp/opencv-2.4.13.7/include"
+			]
+		},
+		{
+			"name": "linux64",
+			"defines": [
+				"_DEBUG"
+			],
+			"compilerPath": "/usr/bin/g++",
+			"cStandard": "c11",
+			"cppStandard": "c++14",
+			"intelliSenseMode": "linux-gcc-x64"
+		}
+	],
+	"version": 4
+}
