@@ -141,51 +141,44 @@ void OCL::init_prog()
 
 void OCL::work()
 {
-	cl_int err = cv::getNumThreads();
+	cl_int err;
 	cl_event e;
-	cl_int const M = 4096, N = 5120, Q = 3072;
-	Vec4z szlocal(TS, TS), sztotal(Q, M);
-	Mat A(M, N, CV_32F), B(N, Q, CV_32F), C(M, Q, CV_32F), D(M, Q, CV_32F);
-	size_t dstsize = C.total() * C.elemSize();
+	cl_int const M = 10240, N = 5120;
+	Vec4z szlocal(TS, TS), sztotal(N, M);
+	Mat A(M, N, CV_32F), B(N, M, CV_32F), C(N, M, CV_32F);
+	size_t srcsize = A.total() * A.elemSize();
+	size_t dstsize = B.total() * B.elemSize();
 	randu(A, -8.0, nextafter(8.0, 9.0));
-	randu(B, -8.0, nextafter(8.0, 9.0));
-	CheckCLError(cl_mem a = clCreateBuffer(context, CL_MEM_COPY_HOST_PTR + CL_MEM_READ_ONLY, A.total() * A.elemSize(), A.data, &err));
-	CheckCLError(cl_mem b = clCreateBuffer(context, CL_MEM_COPY_HOST_PTR + CL_MEM_READ_ONLY, B.total() * B.elemSize(), B.data, &err));
-	CheckCLError(cl_mem c = clCreateBuffer(context, CL_MEM_WRITE_ONLY, dstsize, NULL, &err));
-	clFlush(cqueue), clFinish(cqueue);
+	transpose(A, C);
+	CheckCLError(cl_mem a = clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY, srcsize, A.data, &err));
+	CheckCLError(cl_mem b = clCreateBuffer(context, CL_MEM_WRITE_ONLY, dstsize, NULL, &err));
 	fprintf(stderr, "create matrix done\n");
 
 	char KS[32];
 	for (int i = 0; i < nkernel; ++i)
 	{
-		swap(C, D);
-		CheckCLError(err = clEnqueueFillBuffer(cqueue, c, A.data, sizeof(float), 0, dstsize, 0, NULL, NULL));
+		CheckCLError(err = clEnqueueFillBuffer(cqueue, b, A.data, sizeof(float), 0, dstsize, 0, NULL, NULL));
 		clFlush(cqueue), clFinish(cqueue);
-		snprintf(KS, sizeof(KS), "matmul%d", i);
+		snprintf(KS, sizeof(KS), "matt%d", i);
 		CheckCLError(cl_kernel K = clCreateKernel(program, KS, &err));
 		CheckCLError(err = clSetKernelArg(K, 0, sizeof(M), &M));
 		CheckCLError(err = clSetKernelArg(K, 1, sizeof(M), &N));
-		CheckCLError(err = clSetKernelArg(K, 2, sizeof(M), &Q));
-		CheckCLError(err = clSetKernelArg(K, 3, sizeof(a), &a));
-		CheckCLError(err = clSetKernelArg(K, 4, sizeof(b), &b));
-		CheckCLError(err = clSetKernelArg(K, 5, sizeof(c), &c));
-		sztotal[0] = i < 2 ? Q : (Q + WS - 1) / WS;
+		CheckCLError(err = clSetKernelArg(K, 2, sizeof(a), &a));
+		CheckCLError(err = clSetKernelArg(K, 3, sizeof(b), &b));
+		sztotal[0] = i < 2 ? N : (N + WS - 1) / WS;
 		makeDiv(sztotal, szlocal);
 		CheckCLError(err = clEnqueueNDRangeKernel(cqueue, K, 2, NULL, sztotal.val, szlocal.val, 0, NULL, &e));
-		CheckCLError(clEnqueueReadBuffer(cqueue, c, CL_TRUE, 0, dstsize, C.data, 1, &e, NULL));
+		CheckCLError(clEnqueueReadBuffer(cqueue, b, CL_TRUE, 0, dstsize, B.data, 1, &e, NULL));
 		clFlush(cqueue), clFinish(cqueue);
 		CheckCLError(err = clWaitForEvents(1, &e));
 		getCLTime(e, KS);
 		CheckCLError(err = clReleaseKernel(K));
-		if (i == 0) continue;
-		absdiff(C, D, D);
-		double dif = sum(D)[0];
-		fprintf(stderr, "difference = %f\n", dif);
-		fflush(stderr);
+		absdiff(B, C, B);
+		double dif = sum(B)[0];
+		fprintf(stderr, "%s: difference = %f\n", KS, dif);
 	}
 	CheckCLError(err = clReleaseMemObject(a));
 	CheckCLError(err = clReleaseMemObject(b));
-	CheckCLError(err = clReleaseMemObject(c));
 	CheckCLError(err = clReleaseEvent(e));
 }
 

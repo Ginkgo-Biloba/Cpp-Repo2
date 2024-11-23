@@ -13,11 +13,8 @@
 			"cppStandard": "c++14",
 			"intelliSenseMode": "windows-gcc-x64",
 			"includePath": [
-				"${env:mingw}/x86_64-w64-mingw32/include",
-				"${env:mingw}/lib/gcc/x86_64-w64-mingw32/5.1.0/include",
-				"${env:mingw}/lib/gcc/x86_64-w64-mingw32/5.1.0/include/c++",
-				"C:/copyapp/glfw-3.3.8/include",
-				"C:/copyapp/opencv-2.4.13.7/include"
+				"C:/appdata/glfw-3.3.8/include",
+				"C:/appdata/opencv-2.4.13/include"
 			]
 		},
 		{

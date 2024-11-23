@@ -10,9 +10,21 @@
 #include <cassert>
 using cv::AutoBuffer;
 using cv::Mat;
+using std::max;
+using std::min;
 using std::string;
 using std::vector;
 typedef cv::Vec<size_t, 4> Vec4z;
+
+#if __cplusplus < 201703L
+template <class T>
+T const& clamp(T const& x, T const& lo, T const& hi)
+{
+	return x < lo ? lo : (hi < x ? hi : x);
+}
+#else
+using std::clamp;
+#endif
 
 
 char const* clErrorString(int err)

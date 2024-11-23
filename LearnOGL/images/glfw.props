@@ -3,15 +3,17 @@
 	<ImportGroup Label="PropertySheets" />
 	<PropertyGroup Label="UserMacros" />
 	<PropertyGroup>
-		<glfwdir>C:\copyapp\glfw-3.3</glfwdir>
+		<glfwdir>C:\appdata\3rdparty</glfwdir>
 		<IncludePath>$(glfwdir)\include;$(IncludePath)</IncludePath>
-		<LibraryPath Condition="'$(Configuration)'=='Debug'">$(glfwdir)\$(PlatformTarget)_Debug;$(LibraryPath)</LibraryPath>
-		<LibraryPath Condition="'$(Configuration)'=='Release'">$(glfwdir)\$(PlatformTarget)_RelWithDebInfo;$(LibraryPath)</LibraryPath>
+		<LibraryPath>$(glfwdir)\$(PlatformTarget)-lib;$(LibraryPath)</LibraryPath>
 	</PropertyGroup>
 	<ItemDefinitionGroup>
-		<Link>
+		<Link Condition="'$(Configuration)'=='Debug'">
+			<AdditionalDependencies>glfw3d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+		</Link>
+		<Link Condition="'$(Configuration)'=='Release'">
 			<AdditionalDependencies>glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
 		</Link>
-		</ItemDefinitionGroup>
+	</ItemDefinitionGroup>
 	<ItemGroup />
 </Project>

@@ -5,7 +5,6 @@ BasedOnStyle : WebKit
 IndentWidth : 2
 AccessModifierOffset : -2
 AlignAfterOpenBracket : DontAlign
-AlignConsecutiveMacros : Consecutive
 AlwaysBreakBeforeMultilineStrings : false
 ContinuationIndentWidth : 2
 ConstructorInitializerIndentWidth : 2
@@ -13,7 +12,7 @@ IndentPPDirectives : AfterHash
 NamespaceIndentation : None
 
 TabWidth : 2
-UseTab : Always
+UseTab : AlignWithSpaces
 
 BreakBeforeBraces : Allman
 BreakBeforeBinaryOperators : All
@@ -33,7 +32,7 @@ ConstructorInitializerAllOnOneLineOrOnePerLine : true
 Cpp11BracedListStyle : true
 
 # ColumnLimit : 0
-MaxEmptyLinesToKeep : 2
+MaxEmptyLinesToKeep : 1
 KeepEmptyLinesAtTheStartOfBlocks : false
 SortIncludes : false
 ...

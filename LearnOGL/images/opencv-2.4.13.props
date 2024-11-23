@@ -3,9 +3,9 @@
 	<ImportGroup Label="PropertySheets" />
 	<PropertyGroup Label="UserMacros" />
 	<PropertyGroup>
-		<cvdir>E:\CopyApp\opencv-2.4.13</cvdir>
+		<cvdir>C:\appdata\3rdparty</cvdir>
 		<IncludePath>$(cvdir)\include;$(IncludePath)</IncludePath>
-		<LibraryPath>$(cvdir)\lib-vc14_$(PlatformTarget);$(LibraryPath)</LibraryPath>
+		<LibraryPath>$(cvdir)\$(PlatformTarget)-lib;$(LibraryPath)</LibraryPath>
 	</PropertyGroup>
 	<ItemDefinitionGroup>
 		<Link Condition="'$(Configuration)'=='Debug'">
@@ -14,6 +14,6 @@
 		<Link Condition="'$(Configuration)'=='Release'">
 			<AdditionalDependencies>opencv_calib3d2413.lib;opencv_contrib2413.lib;opencv_core2413.lib;opencv_features2d2413.lib;opencv_flann2413.lib;opencv_gpu2413.lib;opencv_highgui2413.lib;opencv_imgproc2413.lib;opencv_legacy2413.lib;opencv_ml2413.lib;opencv_nonfree2413.lib;opencv_objdetect2413.lib;opencv_ocl2413.lib;opencv_photo2413.lib;opencv_stitching2413.lib;opencv_superres2413.lib;opencv_video2413.lib;opencv_videostab2413.lib;%(AdditionalDependencies)</AdditionalDependencies>
 		</Link>
-		</ItemDefinitionGroup>
+	</ItemDefinitionGroup>
 	<ItemGroup />
 </Project>

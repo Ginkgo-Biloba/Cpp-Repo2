@@ -6,7 +6,6 @@ __kernel void reduce(__global uchar const* src, int const len, __global uint* ds
 {
 	int const li = get_local_id(0);
 	int const pi = get_group_id(0);
-	int const group = get_num_groups(0);
 	__local uint S[WGS];
 	S[li] = 0;
 	for (int i = get_global_id(0); i < len; i += get_global_size(0))

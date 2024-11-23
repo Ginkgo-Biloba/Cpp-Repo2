@@ -161,6 +161,10 @@
     <ClCompile Include="..\images\glad.c" />
     <ClCompile Include="camsys.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="7.4.camera.fs" />
+    <None Include="7.4.camera.vs" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
